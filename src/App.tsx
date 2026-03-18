@@ -14,7 +14,7 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeCommentBubble, setActiveCommentBubble] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(false);
-  
+
   // User Session
   const [currentUser, setCurrentUser] = useState<string>(() => {
     return localStorage.getItem("bubble_current_user") || "Anonymous";
@@ -38,7 +38,7 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [bio, setBio] = useState("");
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
-  
+
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
@@ -52,7 +52,7 @@ export default function App() {
   const [resetStatus, setResetStatus] = useState<"none" | "pending" | "approved" | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [resetMessage, setResetMessage] = useState("");
-  
+
   // Admin Dashboard
   const [adminTab, setAdminTab] = useState<"comments" | "password_requests" | "users">("users");
   const [passwordRequests, setPasswordRequests] = useState<any[]>([]);
@@ -86,12 +86,12 @@ export default function App() {
   const handleLike = async (bubbleId: string) => {
     const bubble = bubbles.find(b => b.id === bubbleId);
     if (!bubble) return;
-    
+
     const hasLiked = (bubble.likedBy || []).includes(userId);
     if (!hasLiked) {
-      setBubbles(prev => prev.map(b => 
+      setBubbles(prev => prev.map(b =>
         b.id === bubbleId
-          ? { ...b, likesCount: b.likesCount + 1, likedBy: [...(b.likedBy || []), userId] } 
+          ? { ...b, likesCount: b.likesCount + 1, likedBy: [...(b.likedBy || []), userId] }
           : b
       ));
       await db.likeBubble(bubbleId, userId);
@@ -100,7 +100,7 @@ export default function App() {
 
   const handleSwipe = async (direction: "left" | "right") => {
     if (bubbles.length === 0) return;
-    
+
     const topIndex = currentIndex % bubbles.length;
     const currentBubble = bubbles[topIndex];
 
@@ -188,7 +188,7 @@ export default function App() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginUsername || !loginPassword) return;
-    
+
     try {
       const res = await db.loginUser({ username: loginUsername, password: loginPassword });
       setCurrentUser(res.user.displayName);
@@ -268,7 +268,7 @@ export default function App() {
             </div>
           </div>
           <h1 className="text-2xl font-bold text-center text-yellow-900 dark:text-yellow-50 mb-8">Welcome to Say It 🫧</h1>
-          
+
           <div className="space-y-4">
             <button
               onClick={() => setView("create_account")}
@@ -318,7 +318,7 @@ export default function App() {
           className="bg-white dark:bg-gray-800 p-8 rounded-sm shadow-sm w-full max-w-sm border border-gray-300 dark:border-gray-700 flex flex-col items-center mt-8"
         >
           <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-50 mb-8 font-serif">Say It</h1>
-          <form onSubmit={handleLogin} className="w-full space-y-3">
+          <form onSubmit={handleLogin} className="w-full space-y-3" noValidate>
             <div>
               <input
                 type="text"
@@ -326,7 +326,6 @@ export default function App() {
                 onChange={(e) => setLoginUsername(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all"
                 placeholder="Username (e.g. johndoe123)"
-                required
               />
             </div>
             <div>
@@ -336,7 +335,6 @@ export default function App() {
                 onChange={(e) => setLoginPassword(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all"
                 placeholder="Password"
-                required
               />
             </div>
             <button
@@ -346,14 +344,14 @@ export default function App() {
               Log in
             </button>
           </form>
-          
-          <button 
+
+          <button
             onClick={() => {
               setView("forgot_password");
               setResetStatus(null);
               setForgotUsername("");
               setResetMessage("");
-            }} 
+            }}
             className="mt-4 text-sm text-yellow-600 dark:text-yellow-400 hover:underline"
           >
             Forgot Password?
@@ -414,9 +412,9 @@ export default function App() {
           className="bg-white dark:bg-gray-800 p-8 rounded-sm shadow-sm w-full max-w-sm border border-gray-300 dark:border-gray-700 flex flex-col items-center mt-8"
         >
           <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-50 mb-4 font-serif">Reset Password</h1>
-          
+
           {resetStatus !== "approved" ? (
-            <form onSubmit={handleCheckStatus} className="w-full space-y-3">
+            <form onSubmit={handleCheckStatus} className="w-full space-y-3" noValidate>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 text-center">
                 Enter your username to request a password reset or check the status of an existing request.
               </p>
@@ -427,7 +425,6 @@ export default function App() {
                   onChange={(e) => setForgotUsername(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all"
                   placeholder="Username"
-                  required
                 />
               </div>
               <button
@@ -438,7 +435,7 @@ export default function App() {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleResetPassword} className="w-full space-y-3">
+            <form onSubmit={handleResetPassword} className="w-full space-y-3" noValidate>
               <div>
                 <input
                   type="password"
@@ -446,7 +443,6 @@ export default function App() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all"
                   placeholder="New Password"
-                  required
                 />
               </div>
               <button
@@ -464,8 +460,8 @@ export default function App() {
             </div>
           )}
 
-          <button 
-            onClick={() => setView("login")} 
+          <button
+            onClick={() => setView("login")}
             className="mt-6 text-sm text-gray-500 dark:text-gray-400 hover:underline"
           >
             Back to Login
@@ -489,7 +485,7 @@ export default function App() {
             Sign up to share your thoughts and see what others are saying.
           </p>
 
-          <form onSubmit={handleCreateBubble} className="w-full space-y-3">
+          <form onSubmit={handleCreateBubble} className="w-full space-y-3" noValidate>
             {/* Photo Upload */}
             <div className="flex flex-col items-center justify-center mb-4">
               <label htmlFor="photo-upload" className="cursor-pointer relative group">
@@ -520,7 +516,6 @@ export default function App() {
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all"
                 placeholder="Unique Username (e.g. johndoe123)"
-                required
               />
             </div>
             <div>
@@ -530,7 +525,6 @@ export default function App() {
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all"
                 placeholder="Display Name (e.g. John Doe)"
-                required
               />
             </div>
             <div>
@@ -540,7 +534,6 @@ export default function App() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all"
                 placeholder="Password"
-                required
               />
             </div>
             <div>
@@ -550,7 +543,6 @@ export default function App() {
                 onChange={(e) => setBio(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all"
                 placeholder="Short Bio"
-                required
               />
             </div>
 
@@ -592,15 +584,14 @@ export default function App() {
             </div>
           </div>
           <h2 className="text-xl font-bold text-center text-gray-900 dark:text-gray-50 mb-6">Administrator Login</h2>
-          <form onSubmit={handleAdminLogin} className="space-y-4">
+          <form onSubmit={handleAdminLogin} className="space-y-4" noValidate>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
               <input
-                type="email"
+                type="text"
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gray-400 outline-none transition-all"
-                required
               />
             </div>
             <div>
@@ -610,7 +601,6 @@ export default function App() {
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gray-400 outline-none transition-all"
-                required
               />
             </div>
             <button
@@ -876,7 +866,7 @@ export default function App() {
           {(() => {
             if (bubbles.length === 0) return null;
             const visibleCards = [];
-            
+
             // Bottom card
             if (bubbles.length > 1) {
               const bottomIndex = (currentIndex + 1) % bubbles.length;
@@ -892,7 +882,7 @@ export default function App() {
                 />
               );
             }
-            
+
             // Top card
             const topIndex = currentIndex % bubbles.length;
             visibleCards.push(
@@ -906,7 +896,7 @@ export default function App() {
                 onCommentClick={() => setActiveCommentBubble(bubbles[topIndex].id)}
               />
             );
-            
+
             return visibleCards;
           })()}
         </AnimatePresence>
