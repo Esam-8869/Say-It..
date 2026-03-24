@@ -330,7 +330,7 @@ export default function App() {
           className="bg-white dark:bg-gray-800 p-8 rounded-sm shadow-sm w-full max-w-sm border border-gray-300 dark:border-gray-700 flex flex-col items-center mt-8"
         >
           <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-50 mb-8 font-serif">Say It</h1>
-          <form onSubmit={handleLogin} className="w-full space-y-3">
+          <form onSubmit={handleLogin} className="w-full space-y-3" noValidate>
             <div>
               <input
                 type="email"
@@ -428,7 +428,7 @@ export default function App() {
           <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-50 mb-4 font-serif">Reset Password</h1>
           
           {resetStatus !== "approved" ? (
-            <form onSubmit={handleCheckStatus} className="w-full space-y-3">
+            <form onSubmit={handleCheckStatus} className="w-full space-y-3" noValidate>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 text-center">
                 Enter your email address to request a password reset or check the status of an existing request.
               </p>
@@ -501,7 +501,7 @@ export default function App() {
             Sign up to share your thoughts and see what others are saying.
           </p>
 
-          <form onSubmit={handleRegister} className="w-full space-y-3">
+          <form onSubmit={handleRegister} className="w-full space-y-3" noValidate>
             <div>
               <input
                 type="email"
