@@ -10,15 +10,14 @@ interface Props {
   onCommentClick: () => void;
   onLikeClick: () => void;
   isTop: boolean;
+  indexOffset: number; // 0 for top, 1 for next, 2 for the one after
   userId: string;
 }
 
-export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick, isTop, userId }: Props) {
+export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick, isTop, indexOffset, userId }: Props) {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
-  const likeOpacity = useTransform(x, [0, 100], [0, 1]);
-  const nopeOpacity = useTransform(x, [-100, 0], [1, 0]);
 
   const handleDragEnd = (event: any, info: any) => {
     if (info.offset.x > 100) {
@@ -35,10 +34,11 @@ export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick
       className="absolute inset-0 w-full h-full rounded-3xl shadow-xl overflow-hidden bg-white"
       style={{
         x: isTop ? x : 0,
+        y: isTop ? 0 : indexOffset * 15,
         rotate: isTop ? rotate : 0,
-        opacity: isTop ? opacity : 1,
-        zIndex: isTop ? 10 : 0,
-        scale: isTop ? 1 : 0.95,
+        opacity: isTop ? opacity : 1 - (indexOffset * 0.2),
+        zIndex: 10 - indexOffset,
+        scale: isTop ? 1 : 1 - (indexOffset * 0.05),
       }}
       drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
@@ -54,20 +54,6 @@ export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick
         referrerPolicy="no-referrer"
       />
       
-      {/* Overlays for Like/Nope */}
-      <motion.div
-        className="absolute top-10 left-10 border-4 border-emerald-400 text-emerald-400 font-bold text-4xl px-4 py-2 rounded-xl rotate-[-15deg] drop-shadow-md"
-        style={{ opacity: likeOpacity }}
-      >
-        LIKE
-      </motion.div>
-      <motion.div
-        className="absolute top-10 right-10 border-4 border-rose-400 text-rose-400 font-bold text-4xl px-4 py-2 rounded-xl rotate-[15deg] drop-shadow-md"
-        style={{ opacity: nopeOpacity }}
-      >
-        NOPE
-      </motion.div>
-
       {/* Info Gradient */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 pt-20 text-white">
         <h2 className="text-3xl font-bold mb-2 text-yellow-50">{bubble.authorName}</h2>

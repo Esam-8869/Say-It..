@@ -837,8 +837,8 @@ export default function App() {
                 <div key={comment.id} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-lg">
-                        🎭
+                      <div className="w-8 h-8 rounded-full bg-yellow-100 dark:bg-gray-700 flex items-center justify-center text-lg">
+                        🫧
                       </div>
                       <span className="font-semibold text-gray-900 dark:text-gray-100">{comment.authorName}</span>
                     </div>
@@ -1042,35 +1042,25 @@ export default function App() {
             if (bubbles.length === 0) return null;
             const visibleCards = [];
             
-            // Bottom card
-            if (bubbles.length > 1) {
-              const bottomIndex = (currentIndex + 1) % bubbles.length;
+            // Determine how many cards to show (up to 3)
+            const cardsToShow = Math.min(bubbles.length, 3);
+            
+            // Push cards from back to front
+            for (let i = cardsToShow - 1; i >= 0; i--) {
+              const currentOffsetIndex = (currentIndex + i) % bubbles.length;
               visibleCards.push(
                 <SwipeCard
-                  key={`${bubbles[bottomIndex].id}-${currentIndex + 1}`}
-                  bubble={bubbles[bottomIndex]}
-                  isTop={false}
+                  key={`${bubbles[currentOffsetIndex].id}-${currentIndex + i}`}
+                  bubble={bubbles[currentOffsetIndex]}
+                  isTop={i === 0}
+                  indexOffset={i}
                   userId={userId}
                   onSwipe={handleSwipe}
-                  onLikeClick={() => handleLike(bubbles[bottomIndex].id)}
-                  onCommentClick={() => setActiveCommentBubble(bubbles[bottomIndex].id)}
+                  onLikeClick={() => handleLike(bubbles[currentOffsetIndex].id)}
+                  onCommentClick={() => setActiveCommentBubble(bubbles[currentOffsetIndex].id)}
                 />
               );
             }
-            
-            // Top card
-            const topIndex = currentIndex % bubbles.length;
-            visibleCards.push(
-              <SwipeCard
-                key={`${bubbles[topIndex].id}-${currentIndex}`}
-                bubble={bubbles[topIndex]}
-                isTop={true}
-                userId={userId}
-                onSwipe={handleSwipe}
-                onLikeClick={() => handleLike(bubbles[topIndex].id)}
-                onCommentClick={() => setActiveCommentBubble(bubbles[topIndex].id)}
-              />
-            );
             
             return visibleCards;
           })()}
