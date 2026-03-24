@@ -1,0 +1,20 @@
+{
+  "name": "Say It",
+  "short_name": "Say It",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fefce8",
+  "theme_color": "#facc15",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/bubble/192/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://picsum.photos/seed/bubble/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
