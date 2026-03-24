@@ -163,12 +163,17 @@ export default function App() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File is too large. Please upload an image smaller than 10MB.");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const MAX_SIZE = 400;
+        const MAX_SIZE = 1200;
         let width = img.width;
         let height = img.height;
 
@@ -189,7 +194,7 @@ export default function App() {
         const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          setPhotoDataUrl(canvas.toDataURL("image/jpeg", 0.8));
+          setPhotoDataUrl(canvas.toDataURL("image/jpeg", 0.9));
         } else {
           setPhotoDataUrl(event.target?.result as string);
         }
@@ -696,12 +701,17 @@ export default function App() {
       const file = e.target.files?.[0];
       if (!file) return;
 
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File is too large. Please upload an image smaller than 10MB.");
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          const MAX_SIZE = 400;
+          const MAX_SIZE = 1200;
           let width = img.width;
           let height = img.height;
 
@@ -722,7 +732,7 @@ export default function App() {
           const ctx = canvas.getContext("2d");
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            setEditPhotoDataUrl(canvas.toDataURL("image/jpeg", 0.8));
+            setEditPhotoDataUrl(canvas.toDataURL("image/jpeg", 0.9));
           } else {
             setEditPhotoDataUrl(event.target?.result as string);
           }
