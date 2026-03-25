@@ -83,7 +83,7 @@ export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick
             }}
             className="bg-yellow-400/20 hover:bg-yellow-400/40 backdrop-blur-md px-4 py-2 rounded-full text-sm font-medium text-yellow-100 transition-colors border border-yellow-400/30"
           >
-            Leave a compliment ✨
+            Leave an anonymous comment
           </button>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { Bubble, Comment } from "./types";
 import { db } from "./services/db";
 import SwipeCard from "./components/SwipeCard";
 import CommentModal from "./components/CommentModal";
-import { Sparkles, Image as ImageIcon, CheckCircle2, Moon, Sun, ShieldCheck, LogIn, UserPlus, Camera, Upload, User } from "lucide-react";
+import { Sparkles, Image as ImageIcon, CheckCircle2, Moon, Sun, ShieldCheck, LogIn, UserPlus, Camera, Upload, User, Menu } from "lucide-react";
 
 type ViewState = "landing" | "create_account" | "profile_setup" | "login" | "forgot_password" | "feed" | "admin_login" | "admin_dashboard" | "profile";
 
@@ -14,6 +14,10 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeCommentBubble, setActiveCommentBubble] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hasSwiped, setHasSwiped] = useState(() => {
+    return localStorage.getItem("sayit_has_swiped") === "true";
+  });
   
   // User Session
   const [currentUser, setCurrentUser] = useState<string>("Anonymous");
@@ -102,6 +106,11 @@ export default function App() {
   const handleSwipe = async (direction: "left" | "right") => {
     if (bubbles.length === 0) return;
     
+    if (!hasSwiped) {
+      setHasSwiped(true);
+      localStorage.setItem("sayit_has_swiped", "true");
+    }
+
     const topIndex = currentIndex % bubbles.length;
     const currentBubble = bubbles[topIndex];
 
@@ -229,43 +238,54 @@ export default function App() {
 
   const TopBar = () => (
     <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-50">
-      <div className="font-bold text-yellow-600 dark:text-yellow-400 flex items-center gap-2 cursor-pointer" onClick={() => setView("landing")}>
-        <Sparkles className="w-5 h-5" />
+      <div className="w-24"></div> {/* Spacer for perfect centering */}
+      <div className="text-3xl font-black text-yellow-500 cursor-pointer tracking-wide absolute left-1/2 -translate-x-1/2 drop-shadow-sm" onClick={() => setView("landing")}>
         Say It
       </div>
       <div className="flex items-center gap-2">
-        {view === "feed" && currentUser === "Anonymous" && (
-          <>
-            <button
-              onClick={() => setView("login")}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-yellow-700 dark:text-yellow-300 bg-white/50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800 rounded-full backdrop-blur-md transition-colors"
-            >
-              <LogIn className="w-4 h-4" />
-              Login
-            </button>
-            <button
-              onClick={() => setView("create_account")}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-yellow-900 bg-yellow-400 hover:bg-yellow-500 rounded-full transition-colors"
-            >
-              <UserPlus className="w-4 h-4" />
-              Sign Up
-            </button>
-          </>
-        )}
-        {currentUserData && (
-          <button
-            onClick={() => setView("profile")}
-            className="w-8 h-8 rounded-full overflow-hidden border-2 border-yellow-400 hover:opacity-80 transition-opacity"
-          >
-            <img src={currentUserData.photoURL} alt="Profile" className="w-full h-full object-cover" />
-          </button>
-        )}
         <button
           onClick={() => setDarkMode(!darkMode)}
           className="p-2 rounded-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-md text-yellow-600 dark:text-yellow-400 hover:bg-white dark:hover:bg-gray-800 transition-colors"
         >
           {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
+        {view === "feed" && currentUser === "Anonymous" && (
+          <div className="relative">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 rounded-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-md text-yellow-600 dark:text-yellow-400 hover:bg-white dark:hover:bg-gray-800 transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col z-50">
+                <button
+                  onClick={() => { setView("login"); setIsMenuOpen(false); }}
+                  className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full text-left"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Login
+                </button>
+                <div className="h-px bg-gray-100 dark:bg-gray-700 w-full" />
+                <button
+                  onClick={() => { setView("create_account"); setIsMenuOpen(false); }}
+                  className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full text-left"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Sign Up
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        {currentUserData && (
+          <button
+            onClick={() => setView("profile")}
+            className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-400 hover:opacity-80 transition-opacity ml-1"
+          >
+            <img src={currentUserData.photoURL} alt="Profile" className="w-full h-full object-cover" />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1066,21 +1086,23 @@ export default function App() {
           })()}
         </AnimatePresence>
 
-        {currentIndex === 0 && bubbles.length > 0 && (
+        {!hasSwiped && bubbles.length > 0 && (
           <motion.div
-            className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center text-white drop-shadow-md"
+            className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center text-white drop-shadow-md w-full"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              animate={{ x: [-20, 20, -20] }}
+              className="flex items-center gap-4 text-4xl"
+              animate={{ x: [-15, 15, -15] }}
               transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
             >
-              <span className="text-4xl">👆</span>
+              <span>👈</span>
+              <span>👉</span>
             </motion.div>
-            <span className="text-sm font-medium mt-2 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">
-              Swipe to explore
+            <span className="text-sm font-medium mt-3 bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm shadow-lg text-center">
+              Swipe left or right to see other photos
             </span>
           </motion.div>
         )}

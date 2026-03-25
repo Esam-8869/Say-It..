@@ -51,7 +51,7 @@ export default function CommentModal({ bubbleId, currentUser, onClose }: Props) 
           className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-yellow-100 dark:border-gray-700"
         >
           <div className="flex items-center justify-between p-4 border-b border-yellow-50 dark:border-gray-700">
-            <h3 className="font-semibold text-yellow-900 dark:text-yellow-50">Leave a Secret Compliment ✨</h3>
+            <h3 className="font-semibold text-yellow-900 dark:text-yellow-50">Leave an anonymous comment</h3>
             <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full">
               <X className="w-5 h-5" />
             </button>
