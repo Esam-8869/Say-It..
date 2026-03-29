@@ -5,6 +5,12 @@ import path from "path";
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  next();
+});
 
 const hasRedis = !!process.env.UPSTASH_REDIS_REST_URL;
 let redis: Redis | null = null;

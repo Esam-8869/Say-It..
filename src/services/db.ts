@@ -5,6 +5,7 @@ const API_BASE = "/api";
 const apiFetch = async (url: string, options?: RequestInit) => {
   const res = await fetch(`${API_BASE}${url}`, {
     headers: { "Content-Type": "application/json" },
+    cache: "no-store",
     ...options,
   });
   const data = await res.json();
