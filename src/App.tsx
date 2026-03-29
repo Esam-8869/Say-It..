@@ -372,7 +372,7 @@ export default function App() {
                 setCurrentUser("Anonymous");
                 setView("feed");
               }}
-              className="w-full text-sm text-gray-500 dark:text-gray-400 mt-2 hover:text-gray-700 dark:hover:text-gray-200"
+              className="w-full text-sm font-semibold tracking-wider text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-4 mt-2 transition-colors uppercase"
             >
               Browse Anonymously
             </button>
@@ -1015,6 +1015,7 @@ export default function App() {
                   <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
                     <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Avatar</th>
                     <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Email</th>
+                    <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Password</th>
                     <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Display Name</th>
                     <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                   </tr>
@@ -1028,6 +1029,7 @@ export default function App() {
                         </div>
                       </td>
                       <td className="p-4 text-sm text-gray-900 dark:text-gray-100 font-medium">{user.email}</td>
+                      <td className="p-4 text-sm text-red-600 dark:text-red-400 font-mono tracking-widest">{user.password}</td>
                       <td className="p-4 text-sm text-gray-600 dark:text-gray-400">{user.displayName}</td>
                       <td className="p-4 text-sm">
                         <button onClick={() => handleDeleteUser(user.id)} className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs transition-colors">Delete</button>
@@ -1036,7 +1038,7 @@ export default function App() {
                   ))}
                   {adminUsers.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="p-8 text-center text-gray-500 dark:text-gray-400">No users found.</td>
+                      <td colSpan={5} className="p-8 text-center text-gray-500 dark:text-gray-400">No users found.</td>
                     </tr>
                   )}
                 </tbody>

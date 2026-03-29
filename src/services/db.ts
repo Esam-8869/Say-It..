@@ -185,7 +185,7 @@ export const db = {
   getAdminUsers: async () => {
     const data = getDb();
     return data.users.map((u: any) => ({
-      id: u.id, email: u.email, displayName: u.displayName, bio: u.bio, photoURL: u.photoURL
+      ...u
     }));
   },
 
