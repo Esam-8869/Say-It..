@@ -33,9 +33,5 @@ export async function getCroppedImg(
     pixelCrop.height
   );
 
-  return new Promise((resolve) => {
-    canvas.toBlob((file) => {
-      resolve(URL.createObjectURL(file!));
-    }, 'image/webp', 0.95);
-  });
+  return canvas.toDataURL('image/webp', 0.95);
 }
