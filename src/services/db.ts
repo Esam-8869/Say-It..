@@ -13,7 +13,7 @@ const apiFetch = async (url: string, options?: RequestInit) => {
 };
 
 export const db = {
-  registerUser: async (userData: { email: string; password: string }) => {
+  registerUser: async (userData: { email: string; password: string; displayName?: string; bio?: string; photoURL?: string; instagramId?: string }) => {
     return apiFetch("/register", {
       method: "POST",
       body: JSON.stringify(userData),

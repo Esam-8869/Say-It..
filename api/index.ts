@@ -1,38 +1,76 @@
 import express from "express";
 import { Redis } from "@upstash/redis";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 
-// Initialize Upstash Redis (env vars auto-set by Vercel integration)
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || "",
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
-});
+const hasRedis = !!process.env.UPSTASH_REDIS_REST_URL;
+let redis: Redis | null = null;
+if (hasRedis) {
+  redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL || "",
+    token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
+  });
+}
 
 const DB_KEY = "sayit_data";
+const isVercel = !!(process.env.VERCEL || process.env.VERCEL_ENV || process.env.VERCEL_REGION);
+const LOCAL_DATA_FILE = isVercel ? "/tmp/data.json" : path.join(process.cwd(), "data.json");
+
+const getDefaultData = () => ({ users: [], bubbles: [], comments: [], passwordResetRequests: [] });
+
+// Initialize local data file if using fallback
+if (!hasRedis && !fs.existsSync(LOCAL_DATA_FILE)) {
+  try {
+    fs.writeFileSync(LOCAL_DATA_FILE, JSON.stringify(getDefaultData()));
+  } catch (e) {
+    console.error("Local file init error:", e);
+  }
+}
 
 const readData = async () => {
   try {
-    const data = await redis.get(DB_KEY) as any;
-    if (data) {
-      if (!data.users) data.users = [];
-      if (!data.bubbles) data.bubbles = [];
-      if (!data.comments) data.comments = [];
-      if (!data.passwordResetRequests) data.passwordResetRequests = [];
-      return data;
+    if (hasRedis && redis) {
+      const data = await redis.get<any>(DB_KEY);
+      if (data) {
+        let parsed = data;
+        if (typeof data === 'string') {
+          try { parsed = JSON.parse(data); } catch (e) { }
+        }
+        if (!parsed.users) parsed.users = [];
+        if (!parsed.bubbles) parsed.bubbles = [];
+        if (!parsed.comments) parsed.comments = [];
+        if (!parsed.passwordResetRequests) parsed.passwordResetRequests = [];
+        return parsed;
+      }
+    } else {
+      if (fs.existsSync(LOCAL_DATA_FILE)) {
+        const fileContent = fs.readFileSync(LOCAL_DATA_FILE, "utf-8");
+        const parsed = JSON.parse(fileContent);
+        if (!parsed.users) parsed.users = [];
+        if (!parsed.bubbles) parsed.bubbles = [];
+        if (!parsed.comments) parsed.comments = [];
+        if (!parsed.passwordResetRequests) parsed.passwordResetRequests = [];
+        return parsed;
+      }
     }
   } catch (err) {
-    console.error("Redis read error:", err);
+    console.error("DB read error:", err);
   }
-  return { users: [], bubbles: [], comments: [], passwordResetRequests: [] };
+  return getDefaultData();
 };
 
 const writeData = async (data: any) => {
   try {
-    await redis.set(DB_KEY, JSON.stringify(data));
+    if (hasRedis && redis) {
+       await redis.set(DB_KEY, data);
+    } else {
+       fs.writeFileSync(LOCAL_DATA_FILE, JSON.stringify(data, null, 2));
+    }
   } catch (e) {
-    console.error("Redis write error:", e);
+    console.error("DB write error:", e);
   }
 };
 
@@ -126,7 +164,7 @@ app.delete("/api/admin/users/:id", async (req, res) => {
 });
 
 app.post("/api/register", async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, displayName, bio, photoURL, instagramId } = req.body;
   const data = await readData();
 
   if (data.users.find((u: any) => u.email === email)) {
@@ -136,11 +174,11 @@ app.post("/api/register", async (req, res) => {
   const newUser = {
     id: Math.random().toString(36).substring(2, 15),
     email,
-    displayName: "Anonymous",
+    displayName: displayName || "Anonymous",
     password,
-    bio: "",
-    instagramId: "",
-    photoURL: `https://picsum.photos/seed/${email}/600/800`
+    bio: bio || "",
+    instagramId: instagramId || "",
+    photoURL: photoURL || `https://picsum.photos/seed/${email}/600/800`
   };
 
   data.users.push(newUser);

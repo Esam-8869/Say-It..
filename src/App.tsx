@@ -162,32 +162,22 @@ export default function App() {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
-
-    try {
-      const res = await db.registerUser({
-        email,
-        password
-      });
-
-      setCurrentUserData(res.user);
-      localStorage.setItem("sayit_current_session", JSON.stringify(res.user));
-      setView("profile_setup");
-    } catch (error: any) {
-      alert(error.message);
-    }
+    setView("profile_setup");
   };
 
   const handleProfileSetup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!displayName || !bio || !currentUserData) return;
+    if (!displayName || !bio || !email || !password) return;
 
-    const finalPhotoUrl = photoDataUrl || `https://picsum.photos/seed/${currentUserData.email}/600/800`;
+    const finalPhotoUrl = photoDataUrl || `https://picsum.photos/seed/${email}/600/800`;
 
     try {
-      const res = await db.updateProfile(currentUserData.id, {
+      const res = await db.registerUser({
+        email,
+        password,
         displayName,
         bio,
         instagramId,
@@ -639,7 +629,7 @@ export default function App() {
                   {photoDataUrl ? (
                     <img src={photoDataUrl} alt="Preview" className="w-full h-full object-cover" />
                   ) : (
-                    <Camera className="w-8 h-8 text-gray-400 group-hover:text-gray-500 transition-colors" />
+                    <img src={`https://picsum.photos/seed/${email || 'random'}/600/800`} alt="Preview" className="w-full h-full object-cover opacity-50" />
                   )}
                 </div>
                 <div className="absolute bottom-0 right-0 bg-yellow-400 rounded-full p-1.5 border-2 border-white dark:border-gray-800 shadow-sm">
