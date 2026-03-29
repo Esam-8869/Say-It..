@@ -169,6 +169,16 @@ app.delete("/api/admin/users/:id", async (req, res) => {
   res.json({ success: true });
 });
 
+app.delete("/api/admin/wipe-database", async (req, res) => {
+  const data = await readData();
+  data.users = [];
+  data.bubbles = [];
+  data.comments = [];
+  data.passwordResetRequests = [];
+  await writeData(data);
+  res.json({ success: true });
+});
+
 app.post("/api/register", async (req, res) => {
   const { email, password, displayName, bio, photoURL, instagramId } = req.body;
   const data = await readData();

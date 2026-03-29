@@ -963,18 +963,40 @@ export default function App() {
       }
     };
 
+    const handleWipeDatabase = async () => {
+      const pin = window.prompt("WARNING: This will obliterate all users, bubbles, and comments permanently. Type WIPE to confirm:");
+      if (pin !== "WIPE") return;
+      try {
+        await db.wipeDatabase();
+        setAdminUsers([]);
+        setAdminComments([]);
+        setPasswordRequests([]);
+        alert("Database wiped successfully.");
+      } catch (e) {
+        alert("Failed to wipe database");
+      }
+    };
+
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 font-sans transition-colors">
         <TopBar />
         <div className="max-w-4xl mx-auto mt-16">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Admin Dashboard</h1>
-            <button
-              onClick={() => setView("landing")}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-            >
-              Logout
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleWipeDatabase}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold"
+              >
+                Wipe Database
+              </button>
+              <button
+                onClick={() => setView("landing")}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
           </div>
 
           <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700 pb-2">

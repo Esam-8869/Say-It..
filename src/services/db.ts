@@ -116,4 +116,8 @@ export const db = {
   deleteUser: async (id: string) => {
     return apiFetch(`/admin/users/${id}`, { method: "DELETE" });
   },
+
+  wipeDatabase: async () => {
+    return apiFetch(`/admin/wipe-database`, { method: "DELETE" });
+  },
 };
