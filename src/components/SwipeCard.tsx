@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, useMotionValue, useTransform } from "motion/react";
 import { Bubble } from "../types";
-import { Heart, X } from "lucide-react";
+import { Heart, X, Instagram } from "lucide-react";
 
 interface Props {
   key?: React.Key;
@@ -39,6 +39,7 @@ export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick
         opacity: isTop ? opacity : 1 - (indexOffset * 0.2),
         zIndex: 10 - indexOffset,
         scale: isTop ? 1 : 1 - (indexOffset * 0.05),
+        willChange: isTop ? "transform, opacity" : "auto",
       }}
       drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
@@ -56,7 +57,20 @@ export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick
       
       {/* Info Gradient */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 pt-20 text-white">
-        <h2 className="text-3xl font-bold mb-2 text-yellow-50">{bubble.authorName}</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-3xl font-bold text-yellow-50">{bubble.authorName}</h2>
+          {bubble.instagramId && (
+            <a 
+              href={`https://instagram.com/${bubble.instagramId.replace('@', '')}`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="bg-pink-500/20 hover:bg-pink-500/40 text-pink-300 p-2 rounded-full backdrop-blur-md transition-colors border border-pink-500/30"
+            >
+              <Instagram className="w-5 h-5" />
+            </a>
+          )}
+        </div>
         <p className="text-sm text-yellow-100/90 mb-4">{bubble.bio}</p>
         
         <div className="flex items-center justify-between">

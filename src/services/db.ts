@@ -1,149 +1,195 @@
 import { Bubble, Comment } from "../types";
 
+const DB_KEY = "sayit_permanent_database";
+
+export const getDb = () => {
+  const data = localStorage.getItem(DB_KEY);
+  if (data) return JSON.parse(data);
+  return { users: [], bubbles: [], comments: [], passwordResetRequests: [] };
+};
+
+const saveDb = (data: any) => {
+  localStorage.setItem(DB_KEY, JSON.stringify(data));
+};
+
 export const db = {
   registerUser: async (userData: any) => {
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(userData),
-    });
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || "Registration failed");
+    const data = getDb();
+    if (data.users.find((u: any) => u.email === userData.email)) {
+      throw new Error("Email already exists");
     }
-    return res.json();
+    const newUser = {
+      id: Math.random().toString(36).substring(2, 15),
+      email: userData.email,
+      displayName: "Anonymous",
+      password: userData.password,
+      bio: "",
+      photoURL: `https://picsum.photos/seed/${userData.email}/600/800`,
+      instagramId: ""
+    };
+    data.users.push(newUser);
+    saveDb(data);
+    return { success: true, user: newUser };
   },
 
   updateProfile: async (userId: string, profileData: any) => {
-    const res = await fetch(`/api/users/${userId}/profile`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(profileData),
+    const data = getDb();
+    const user = data.users.find((u: any) => u.id === userId);
+    if (!user) throw new Error("User not found");
+
+    if (profileData.displayName !== undefined) user.displayName = profileData.displayName;
+    if (profileData.bio !== undefined) user.bio = profileData.bio;
+    if (profileData.photoURL !== undefined) user.photoURL = profileData.photoURL;
+    if (profileData.instagramId !== undefined) user.instagramId = profileData.instagramId;
+
+    data.bubbles.forEach((b: any) => {
+      if (b.authorId === user.id) {
+        if (profileData.displayName !== undefined) b.authorName = profileData.displayName;
+        if (profileData.photoURL !== undefined) b.photoURL = profileData.photoURL;
+        if (profileData.bio !== undefined) b.bio = profileData.bio;
+        if (profileData.instagramId !== undefined) b.instagramId = profileData.instagramId;
+      }
     });
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || "Profile update failed");
-    }
-    return res.json();
+
+    saveDb(data);
+    return { success: true, user };
   },
 
   loginUser: async (credentials: any) => {
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(credentials),
-    });
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || "Login failed");
-    }
-    return res.json();
+    const data = getDb();
+    const user = data.users.find((u: any) => u.email === credentials.email && u.password === credentials.password);
+    if (!user) throw new Error("Invalid email or password");
+    return { success: true, user };
   },
 
   getBubbles: async (): Promise<Bubble[]> => {
-    const res = await fetch("/api/bubbles");
-    return res.json();
+    return getDb().bubbles;
   },
 
   addBubble: async (bubble: Bubble) => {
-    await fetch("/api/bubbles", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bubble),
-    });
+    const data = getDb();
+    data.bubbles.unshift(bubble);
+    saveDb(data);
   },
 
   likeBubble: async (id: string, userId: string) => {
-    await fetch(`/api/bubbles/${id}/like`, { 
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId })
-    });
+    const data = getDb();
+    const bubble = data.bubbles.find((b: any) => b.id === id);
+    if (bubble) {
+      if (!bubble.likedBy) bubble.likedBy = [];
+      if (!bubble.likedBy.includes(userId)) {
+        bubble.likedBy.push(userId);
+        bubble.likesCount += 1;
+        saveDb(data);
+      }
+    }
   },
 
   getComments: async (bubbleId: string): Promise<Comment[]> => {
-    const res = await fetch(`/api/comments/${bubbleId}`);
-    return res.json();
+    const data = getDb();
+    return data.comments.filter((c: any) => c.bubbleId === bubbleId);
   },
 
   addComment: async (comment: Comment) => {
-    await fetch("/api/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(comment),
-    });
+    const data = getDb();
+    data.comments.push(comment);
+    saveDb(data);
   },
 
   getAllCommentsAdmin: async (): Promise<Comment[]> => {
-    const res = await fetch("/api/admin/comments");
-    return res.json();
+    const data = getDb();
+    return data.comments.map((c: any) => {
+      const bubble = data.bubbles.find((b: any) => b.id === c.bubbleId);
+      return { ...c, bubbleAuthorName: bubble ? bubble.authorName : "Unknown" };
+    });
   },
 
   getUserComments: async (userId: string): Promise<Comment[]> => {
-    const res = await fetch(`/api/user/${userId}/comments`);
-    return res.json();
+    const data = getDb();
+    const userBubbles = data.bubbles.filter((b: any) => b.authorId === userId);
+    const userBubbleIds = userBubbles.map((b: any) => b.id);
+    const userComments = data.comments.filter((c: any) => userBubbleIds.includes(c.bubbleId));
+    
+    return userComments.map((c: any) => {
+      const bubble = userBubbles.find((b: any) => b.id === c.bubbleId);
+      return { ...c, bubbleAuthorName: bubble ? bubble.authorName : "Unknown" };
+    });
   },
 
   requestPasswordReset: async (email: string) => {
-    const res = await fetch("/api/password-reset/request", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+    const data = getDb();
+    const user = data.users.find((u: any) => u.email === email);
+    if (!user) throw new Error("User not found");
+
+    const existingRequest = data.passwordResetRequests.find((r: any) => r.email === email);
+    if (existingRequest) return { success: true, message: "Request already pending" };
+
+    data.passwordResetRequests.push({
+      id: Math.random().toString(36).substring(2, 15),
+      email,
+      status: "pending",
+      timestamp: Date.now()
     });
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || "Failed to request password reset");
-    }
-    return res.json();
+    saveDb(data);
+    return { success: true };
   },
 
   getPasswordResetStatus: async (email: string) => {
-    const res = await fetch(`/api/password-reset/status/${email}`);
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || "Failed to get status");
-    }
-    return res.json();
+    const data = getDb();
+    const request = data.passwordResetRequests.find((r: any) => r.email === email);
+    if (!request) return { status: "none" };
+    return { status: request.status };
   },
 
-  resetPassword: async (data: any) => {
-    const res = await fetch("/api/password-reset/reset", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || "Failed to reset password");
-    }
-    return res.json();
+  resetPassword: async (reqData: any) => {
+    const data = getDb();
+    const requestIndex = data.passwordResetRequests.findIndex((r: any) => r.email === reqData.email && r.status === "approved");
+    if (requestIndex === -1) throw new Error("No approved reset request found");
+    
+    const user = data.users.find((u: any) => u.email === reqData.email);
+    if (user) user.password = reqData.newPassword;
+    
+    data.passwordResetRequests.splice(requestIndex, 1);
+    saveDb(data);
+    return { success: true };
   },
 
   getAdminPasswordResets: async () => {
-    const res = await fetch("/api/admin/password-resets");
-    return res.json();
+    return getDb().passwordResetRequests;
   },
 
   approvePasswordReset: async (id: string) => {
-    const res = await fetch(`/api/admin/password-resets/${id}/approve`, { method: "POST" });
-    if (!res.ok) throw new Error("Failed to approve");
-    return res.json();
+    const data = getDb();
+    const request = data.passwordResetRequests.find((r: any) => r.id === id);
+    if (request) { request.status = "approved"; saveDb(data); }
+    return { success: true };
   },
 
   rejectPasswordReset: async (id: string) => {
-    const res = await fetch(`/api/admin/password-resets/${id}/reject`, { method: "POST" });
-    if (!res.ok) throw new Error("Failed to reject");
-    return res.json();
+    const data = getDb();
+    data.passwordResetRequests = data.passwordResetRequests.filter((r: any) => r.id !== id);
+    saveDb(data);
+    return { success: true };
   },
 
   getAdminUsers: async () => {
-    const res = await fetch("/api/admin/users");
-    return res.json();
+    const data = getDb();
+    return data.users.map((u: any) => ({
+      id: u.id, email: u.email, displayName: u.displayName, bio: u.bio, photoURL: u.photoURL
+    }));
   },
 
   deleteUser: async (id: string) => {
-    const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
-    if (!res.ok) throw new Error("Failed to delete user");
-    return res.json();
+    const data = getDb();
+    const user = data.users.find((u: any) => u.id === id);
+    if (!user) throw new Error("User not found");
+
+    data.users = data.users.filter((u: any) => u.id !== id);
+    const userBubbleIds = data.bubbles.filter((b: any) => b.authorId === id).map((b: any) => b.id);
+    data.bubbles = data.bubbles.filter((b: any) => b.authorId !== id);
+    data.comments = data.comments.filter((c: any) => !userBubbleIds.includes(c.bubbleId));
+    data.passwordResetRequests = data.passwordResetRequests.filter((r: any) => r.email !== user.email);
+    saveDb(data);
+    return { success: true };
   }
 };

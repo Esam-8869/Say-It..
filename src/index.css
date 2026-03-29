@@ -1,2 +1,8 @@
 @import "tailwindcss";
+
+@layer utilities {
+  .font-fraunces {
+    font-family: 'Fraunces', serif;
+  }
+}
 @variant dark (&:is(.dark *));

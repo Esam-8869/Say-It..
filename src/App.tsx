@@ -9,7 +9,17 @@ import { Sparkles, Image as ImageIcon, CheckCircle2, Moon, Sun, ShieldCheck, Log
 type ViewState = "landing" | "create_account" | "profile_setup" | "login" | "forgot_password" | "feed" | "admin_login" | "admin_dashboard" | "profile";
 
 export default function App() {
-  const [view, setView] = useState<ViewState>("landing");
+  const [currentUserData, setCurrentUserData] = useState<{ id: string; email: string; displayName: string; photoURL: string; bio: string; instagramId?: string } | null>(() => {
+    const saved = localStorage.getItem("sayit_current_session");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [view, setView] = useState<ViewState>(() => {
+    const savedUser = localStorage.getItem("sayit_current_session");
+    if (savedUser) return "feed";
+    return "landing";
+  });
+
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeCommentBubble, setActiveCommentBubble] = useState<string | null>(null);
@@ -20,8 +30,11 @@ export default function App() {
   });
   
   // User Session
-  const [currentUser, setCurrentUser] = useState<string>("Anonymous");
-  const [currentUserData, setCurrentUserData] = useState<{ id: string; email: string; displayName: string; photoURL: string; bio: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<string>(() => {
+    const saved = localStorage.getItem("sayit_current_session");
+    return saved ? JSON.parse(saved).displayName : "Anonymous";
+  });
+  
   const [userId] = useState(() => {
     let id = localStorage.getItem("bubble_user_id");
     if (!id) {
@@ -36,6 +49,7 @@ export default function App() {
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [bio, setBio] = useState("");
+  const [instagramId, setInstagramId] = useState("");
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   
   const [loginEmail, setLoginEmail] = useState("");
@@ -56,6 +70,7 @@ export default function App() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editDisplayName, setEditDisplayName] = useState("");
   const [editBio, setEditBio] = useState("");
+  const [editInstagramId, setEditInstagramId] = useState("");
   const [editPhotoDataUrl, setEditPhotoDataUrl] = useState<string | null>(null);
   
   // Admin Dashboard
@@ -131,6 +146,7 @@ export default function App() {
       });
 
       setCurrentUserData(res.user);
+      localStorage.setItem("sayit_current_session", JSON.stringify(res.user));
       setView("profile_setup");
     } catch (error: any) {
       alert(error.message);
@@ -147,6 +163,7 @@ export default function App() {
       const res = await db.updateProfile(currentUserData.id, {
         displayName,
         bio,
+        instagramId,
         photoURL: finalPhotoUrl
       });
 
@@ -162,6 +179,7 @@ export default function App() {
       await db.addBubble(newBubble);
       setCurrentUser(displayName);
       setCurrentUserData(res.user);
+      localStorage.setItem("sayit_current_session", JSON.stringify(res.user));
       setView("feed");
     } catch (error: any) {
       alert(error.message);
@@ -221,6 +239,7 @@ export default function App() {
       const res = await db.loginUser({ email: loginEmail, password: loginPassword });
       setCurrentUser(res.user.displayName);
       setCurrentUserData(res.user);
+      localStorage.setItem("sayit_current_session", JSON.stringify(res.user));
       setView("feed");
     } catch (error: any) {
       alert(error.message);
@@ -304,7 +323,7 @@ export default function App() {
               <Sparkles className="w-8 h-8" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-center text-yellow-900 dark:text-yellow-50 mb-8">Welcome to Say It 🫧</h1>
+          <h1 className="text-3xl font-bold text-center text-yellow-900 dark:text-yellow-50 mb-8 font-fraunces tracking-wide">Welcome to Say It 🫧</h1>
           
           <div className="space-y-4">
             <button
@@ -354,7 +373,7 @@ export default function App() {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-white dark:bg-gray-800 p-8 rounded-sm shadow-sm w-full max-w-sm border border-gray-300 dark:border-gray-700 flex flex-col items-center mt-8"
         >
-          <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-50 mb-8 font-serif">Say It</h1>
+          <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-gray-50 mb-8 font-fraunces">Say It</h1>
           <form onSubmit={handleLogin} className="w-full space-y-3" noValidate>
             <div>
               <input
@@ -521,7 +540,7 @@ export default function App() {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-white dark:bg-gray-800 p-8 rounded-sm shadow-sm w-full max-w-sm border border-gray-300 dark:border-gray-700 flex flex-col items-center mt-8"
         >
-          <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-50 mb-4 font-serif">Say It</h1>
+          <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-gray-50 mb-4 font-fraunces">Say It</h1>
           <p className="text-center text-gray-500 dark:text-gray-400 font-medium mb-6 text-sm">
             Sign up to share your thoughts and see what others are saying.
           </p>
@@ -629,6 +648,15 @@ export default function App() {
                 required
               />
             </div>
+            <div>
+              <input
+                type="text"
+                value={instagramId}
+                onChange={(e) => setInstagramId(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all"
+                placeholder="Instagram ID (Optional, e.g. @zuck)"
+              />
+            </div>
 
             <button
               type="submit"
@@ -706,6 +734,7 @@ export default function App() {
         const res = await db.updateProfile(currentUserData.id, {
           displayName: editDisplayName,
           bio: editBio,
+          instagramId: editInstagramId,
           photoURL: finalPhotoUrl
         });
         setCurrentUserData(res.user);
@@ -802,6 +831,13 @@ export default function App() {
                   placeholder="Bio"
                   required
                 />
+                <input
+                  type="text"
+                  value={editInstagramId}
+                  onChange={(e) => setEditInstagramId(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all"
+                  placeholder="Instagram ID (Optional, e.g. @zuck)"
+                />
                 <div className="flex gap-2 w-full">
                   <button type="button" onClick={() => setIsEditingProfile(false)} className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm font-medium">Cancel</button>
                   <button type="submit" className="flex-1 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 rounded-lg transition-colors text-sm font-medium">Save</button>
@@ -820,6 +856,7 @@ export default function App() {
                     onClick={() => {
                       setEditDisplayName(currentUserData?.displayName || "");
                       setEditBio(currentUserData?.bio || "");
+                      setEditInstagramId(currentUserData?.instagramId || "");
                       setEditPhotoDataUrl(null);
                       setIsEditingProfile(true);
                     }}
@@ -831,6 +868,7 @@ export default function App() {
                     onClick={() => {
                       setCurrentUser("Anonymous");
                       setCurrentUserData(null);
+                      localStorage.removeItem("sayit_current_session");
                       setView("landing");
                     }}
                     className="px-6 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium text-sm"

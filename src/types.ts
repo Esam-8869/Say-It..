@@ -3,6 +3,7 @@ export interface User {
   displayName: string;
   photoURL: string;
   bio: string;
+  instagramId?: string;
 }
 
 export interface Bubble {
@@ -11,6 +12,7 @@ export interface Bubble {
   authorName: string;
   photoURL: string;
   bio: string;
+  instagramId?: string;
   likesCount: number;
   likedBy?: string[];
 }
