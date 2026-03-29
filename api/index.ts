@@ -12,12 +12,12 @@ app.use((req, res, next) => {
   next();
 });
 
-const hasRedis = !!process.env.UPSTASH_REDIS_REST_URL;
+const hasRedis = !!(process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL);
 let redis: Redis | null = null;
 if (hasRedis) {
   redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL || "",
-    token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
+    url: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || "",
+    token: process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || "",
   });
 }
 

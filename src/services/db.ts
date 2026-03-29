@@ -72,7 +72,7 @@ export const db = {
   },
 
   getAllCommentsAdmin: async (): Promise<Comment[]> => {
-    return apiFetch("/admin/comments");
+    return apiFetch(`/admin/comments?t=${Date.now()}`);
   },
 
   getUserComments: async (userId: string): Promise<Comment[]> => {
@@ -98,7 +98,7 @@ export const db = {
   },
 
   getAdminPasswordResets: async () => {
-    return apiFetch("/admin/password-resets");
+    return apiFetch(`/admin/password-resets?t=${Date.now()}`);
   },
 
   approvePasswordReset: async (id: string) => {
@@ -110,7 +110,7 @@ export const db = {
   },
 
   getAdminUsers: async () => {
-    return apiFetch("/admin/users");
+    return apiFetch(`/admin/users?t=${Date.now()}`);
   },
 
   deleteUser: async (id: string) => {
