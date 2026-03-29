@@ -2,6 +2,16 @@ import express from "express";
 import { Redis } from "@upstash/redis";
 import fs from "fs";
 import path from "path";
+import nodemailer from "nodemailer";
+
+// Configure Gmail SMTP Transporter for Notifications
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER || "",
+    pass: process.env.GMAIL_PASS || "",
+  },
+});
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -287,8 +297,43 @@ app.get("/api/comments/:bubbleId", async (req, res) => {
 
 app.post("/api/comments", async (req, res) => {
   const data = await readData();
-  data.comments.push(req.body);
+  const comment = req.body;
+  
+  // Save comment
+  data.comments.push(comment);
   await writeData(data);
+  
+  // Asynchronous Notification Dispatch
+  try {
+    const targetBubble = data.bubbles.find((b: any) => b.id === comment.bubbleId);
+    if (targetBubble && targetBubble.authorId) {
+      const targetUser = data.users.find((u: any) => u.id === targetBubble.authorId);
+      
+      if (targetUser && targetUser.email && process.env.GMAIL_USER && process.env.GMAIL_PASS) {
+        await transporter.sendMail({
+          from: `"Say It Notifications" <${process.env.GMAIL_USER}>`,
+          to: targetUser.email,
+          subject: `🫧 New Anonymous Comment from ${comment.authorName}!`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border-radius: 16px; background-color: #f9fafb; border: 1px solid #f3f4f6;">
+              <h2 style="color: #ca8a04; text-align: center; font-size: 24px;">Someone just left a comment on your profile!</h2>
+              <div style="background-color: white; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <p style="color: #6b7280; font-size: 14px; margin-bottom: 8px;"><strong>${comment.authorName}</strong> says:</p>
+                <p style="color: #111827; font-size: 16px; font-style: italic; border-left: 3px solid #facc15; padding-left: 12px;">"${comment.text}"</p>
+              </div>
+              <div style="text-align: center; margin-top: 30px;">
+                <a href="https://sayit.vercel.app" style="background-color: #facc15; color: #422006; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; display: inline-block;">Open Say-It to Reply</a>
+              </div>
+              <p style="text-align: center; color: #9ca3af; font-size: 12px; margin-top: 30px;">This is an automated notification from your Say-It profile.</p>
+            </div>
+          `
+        }).catch(err => console.error("Failed to send comment notification:", err));
+      }
+    }
+  } catch (err) {
+    console.error("Notification routing error:", err);
+  }
+
   res.json({ success: true });
 });
 
