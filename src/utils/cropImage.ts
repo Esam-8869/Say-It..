@@ -33,5 +33,5 @@ export async function getCroppedImg(
     pixelCrop.height
   );
 
-  return canvas.toDataURL('image/webp', 0.95);
+  return canvas.toDataURL('image/jpeg', 0.85);
 }
