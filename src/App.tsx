@@ -322,6 +322,54 @@ export default function App() {
     </div>
   );
 
+  if (rawImageToCrop) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4 font-sans text-white">
+        <div className="relative w-full max-w-md h-[60vh] bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
+          <Cropper
+            image={rawImageToCrop}
+            crop={crop}
+            zoom={zoom}
+            aspect={3 / 4}
+            onCropChange={setCrop}
+            onCropComplete={(croppedArea, croppedAreaPixels) => setCroppedAreaPixels(croppedAreaPixels)}
+            onZoomChange={setZoom}
+          />
+        </div>
+        
+        <div className="w-full max-w-md mt-8">
+          <input
+            type="range"
+            value={zoom}
+            min={1}
+            max={3}
+            step={0.1}
+            aria-labelledby="Zoom"
+            onChange={(e) => setZoom(Number(e.target.value))}
+            className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-yellow-400"
+          />
+        </div>
+
+        <div className="w-full max-w-md mt-8 flex justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => setRawImageToCrop(null)}
+            className="flex-1 py-3.5 bg-gray-800 text-gray-300 rounded-xl font-semibold hover:bg-gray-700 transition active:scale-95"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleCropComplete}
+            className="flex-1 py-3.5 bg-yellow-400 text-yellow-950 rounded-xl font-bold hover:bg-yellow-500 transition active:scale-95 shadow-lg shadow-yellow-500/20"
+          >
+            Apply Crop
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (view === "landing") {
     return (
       <div className="min-h-screen bg-yellow-50 dark:bg-gray-900 flex flex-col items-center justify-center p-6 font-sans transition-colors">
@@ -1168,50 +1216,6 @@ export default function App() {
             currentUser={currentUser}
             onClose={() => setActiveCommentBubble(null)}
           />
-        )}
-
-        {rawImageToCrop && (
-          <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4">
-            <div className="relative w-full max-w-md h-[60vh] bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
-              <Cropper
-                image={rawImageToCrop}
-                crop={crop}
-                zoom={zoom}
-                aspect={3 / 4}
-                onCropChange={setCrop}
-                onCropComplete={(croppedArea, croppedAreaPixels) => setCroppedAreaPixels(croppedAreaPixels)}
-                onZoomChange={setZoom}
-              />
-            </div>
-            
-            <div className="w-full max-w-md mt-8">
-              <input
-                type="range"
-                value={zoom}
-                min={1}
-                max={3}
-                step={0.1}
-                aria-labelledby="Zoom"
-                onChange={(e) => setZoom(Number(e.target.value))}
-                className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-yellow-400"
-              />
-            </div>
-
-            <div className="w-full max-w-md mt-8 flex justify-between gap-4">
-              <button
-                onClick={() => setRawImageToCrop(null)}
-                className="flex-1 py-3.5 bg-gray-800 text-gray-300 rounded-xl font-semibold hover:bg-gray-700 transition active:scale-95"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCropComplete}
-                className="flex-1 py-3.5 bg-yellow-400 text-yellow-950 rounded-xl font-bold hover:bg-yellow-500 transition active:scale-95 shadow-lg shadow-yellow-500/20"
-              >
-                Apply Crop
-              </button>
-            </div>
-          </div>
         )}
       </div>
     );
