@@ -25,9 +25,11 @@ export default function App() {
   const [activeCommentBubble, setActiveCommentBubble] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [hasSwiped, setHasSwiped] = useState(() => {
-    return localStorage.getItem("sayit_has_swiped") === "true";
+  const [hasSeenTutorial, setHasSeenTutorial] = useState(() => {
+    return localStorage.getItem("sayit_has_seen_tutorial") === "true";
   });
+  
+  const isScrollingRef = React.useRef(false);
   
   // User Session
   const [currentUser, setCurrentUser] = useState<string>(() => {
@@ -118,21 +120,46 @@ export default function App() {
     }
   };
 
-  const handleSwipe = async (direction: "left" | "right") => {
+  const handleSwipe = async (direction: "up" | "down" | "left" | "right") => {
     if (bubbles.length === 0) return;
+    if (direction === "up") {
+      setCurrentIndex((prev) => prev + 1);
+    } else if (direction === "down") {
+      setCurrentIndex((prev) => (prev - 1 < 0 ? bubbles.length - 1 : prev - 1));
+    }
+  };
+
+  const handleSwipeLike = async (bubbleId: string, isLike: boolean) => {
+    try {
+      if (isLike) {
+        await handleLike(bubbleId);
+      } else {
+        await db.unlikeBubble(bubbleId, userId);
+        setBubbles(prev => prev.map(b => 
+          b.id === bubbleId && b.likedBy && b.likedBy.includes(userId)
+            ? { ...b, likesCount: Math.max(0, b.likesCount - 1), likedBy: b.likedBy.filter(id => id !== userId) } 
+            : b
+        ));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (bubbles.length === 0 || activeCommentBubble || isScrollingRef.current || view !== "feed") return;
     
-    if (!hasSwiped) {
-      setHasSwiped(true);
-      localStorage.setItem("sayit_has_swiped", "true");
+    if (Math.abs(e.deltaY) > 50) {
+      isScrollingRef.current = true;
+      if (e.deltaY > 0) {
+        handleSwipe("up");
+      } else {
+        handleSwipe("down");
+      }
+      setTimeout(() => {
+        isScrollingRef.current = false;
+      }, 600);
     }
-
-    const topIndex = currentIndex % bubbles.length;
-    const currentBubble = bubbles[topIndex];
-
-    if (direction === "right") {
-      await handleLike(currentBubble.id);
-    }
-    setCurrentIndex((prev) => prev + 1);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -1094,7 +1121,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-yellow-50 dark:bg-gray-900 flex flex-col items-center justify-center overflow-hidden font-sans transition-colors">
       <TopBar />
-      <div className="w-full max-w-md h-[80vh] relative mt-12">
+      <div className="w-full max-w-md h-[80vh] relative mt-12" onWheel={handleWheel}>
         <AnimatePresence>
           {(() => {
             if (bubbles.length === 0) return null;
@@ -1114,6 +1141,7 @@ export default function App() {
                   indexOffset={i}
                   userId={userId}
                   onSwipe={handleSwipe}
+                  onSwipeLike={(isLike) => handleSwipeLike(bubbles[currentOffsetIndex].id, isLike)}
                   onLikeClick={() => handleLike(bubbles[currentOffsetIndex].id)}
                   onCommentClick={() => setActiveCommentBubble(bubbles[currentOffsetIndex].id)}
                 />
@@ -1124,25 +1152,27 @@ export default function App() {
           })()}
         </AnimatePresence>
 
-        {!hasSwiped && bubbles.length > 0 && (
-          <motion.div
-            className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center text-white drop-shadow-md w-full"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+        {bubbles.length > 0 && !hasSeenTutorial && (
+          <div 
+            className="absolute z-50 inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-3xl cursor-pointer"
+            onClick={() => {
+              setHasSeenTutorial(true);
+              localStorage.setItem("sayit_has_seen_tutorial", "true");
+            }}
           >
-            <motion.div
-              className="flex items-center gap-4 text-4xl"
-              animate={{ x: [-15, 15, -15] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-            >
-              <span>👈</span>
-              <span>👉</span>
-            </motion.div>
-            <span className="text-sm font-medium mt-3 bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm shadow-lg text-center">
-              Swipe left or right to see other photos
-            </span>
-          </motion.div>
+            <div className="text-white text-center p-6 space-y-8 animate-in fade-in duration-500">
+              <div className="space-y-3">
+                <div className="text-5xl animate-bounce">↕️</div>
+                <p className="font-bold text-xl">Swipe or Scroll Up/Down<br/>to Switch Profiles</p>
+              </div>
+              <div className="w-20 h-px bg-white/30 mx-auto" />
+              <div className="space-y-3">
+                <div className="text-5xl">↔️</div>
+                <p className="font-bold text-xl">Swipe Right to Like 💛<br/>Left to Unlike 💔</p>
+              </div>
+              <p className="text-sm text-white/70 mt-12 font-medium bg-white/10 py-2 px-4 rounded-full">Tap anywhere to start</p>
+            </div>
+          </div>
         )}
 
         {bubbles.length === 0 && (

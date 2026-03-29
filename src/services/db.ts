@@ -85,6 +85,16 @@ export const db = {
     }
   },
 
+  unlikeBubble: async (id: string, userId: string) => {
+    const data = getDb();
+    const bubble = data.bubbles.find((b: any) => b.id === id);
+    if (bubble && bubble.likedBy && bubble.likedBy.includes(userId)) {
+      bubble.likedBy = bubble.likedBy.filter((uid: string) => uid !== userId);
+      bubble.likesCount = Math.max(0, bubble.likesCount - 1);
+      saveDb(data);
+    }
+  },
+
   getComments: async (bubbleId: string): Promise<Comment[]> => {
     const data = getDb();
     return data.comments.filter((c: any) => c.bubbleId === bubbleId);

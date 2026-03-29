@@ -6,24 +6,36 @@ import { Heart, X, Instagram } from "lucide-react";
 interface Props {
   key?: React.Key;
   bubble: Bubble;
-  onSwipe: (direction: "left" | "right") => void;
+  onSwipe: (direction: "up" | "down" | "left" | "right") => void;
   onCommentClick: () => void;
   onLikeClick: () => void;
+  onSwipeLike: (isLike: boolean) => void;
   isTop: boolean;
   indexOffset: number; // 0 for top, 1 for next, 2 for the one after
   userId: string;
 }
 
-export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick, isTop, indexOffset, userId }: Props) {
+export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick, onSwipeLike, isTop, indexOffset, userId }: Props) {
   const x = useMotionValue(0);
+  const y = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
-  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+  const opacity = useTransform(y, [-300, -100, 0, 100, 300], [0, 1, 1, 1, 0]);
 
   const handleDragEnd = (event: any, info: any) => {
-    if (info.offset.x > 100) {
-      onSwipe("right");
-    } else if (info.offset.x < -100) {
-      onSwipe("left");
+    const isVerticalDominant = Math.abs(info.offset.y) > Math.abs(info.offset.x);
+    
+    if (isVerticalDominant) {
+      if (info.offset.y < -80) {
+        onSwipe("up");
+      } else if (info.offset.y > 80) {
+        onSwipe("down");
+      }
+    } else {
+      if (info.offset.x > 80) {
+        onSwipeLike(true);
+      } else if (info.offset.x < -80) {
+        onSwipeLike(false);
+      }
     }
   };
 
@@ -34,15 +46,16 @@ export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick
       className="absolute inset-0 w-full h-full rounded-3xl shadow-xl overflow-hidden bg-white"
       style={{
         x: isTop ? x : 0,
-        y: isTop ? 0 : indexOffset * 15,
+        y: isTop ? y : indexOffset * 15,
         rotate: isTop ? rotate : 0,
         opacity: isTop ? opacity : 1 - (indexOffset * 0.2),
         zIndex: 10 - indexOffset,
         scale: isTop ? 1 : 1 - (indexOffset * 0.05),
         willChange: isTop ? "transform, opacity" : "auto",
       }}
-      drag={isTop ? "x" : false}
-      dragConstraints={{ left: 0, right: 0 }}
+      drag={isTop ? true : false}
+      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+      dragElastic={0.8}
       onDragEnd={handleDragEnd}
       whileTap={isTop ? { cursor: "grabbing" } : {}}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
