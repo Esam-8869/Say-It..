@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import Cropper from 'react-easy-crop';
+import { getCroppedImg } from "./utils/cropImage";
 import { Bubble, Comment } from "./types";
 import { db } from "./services/db";
 import SwipeCard from "./components/SwipeCard";
@@ -74,7 +76,14 @@ export default function App() {
   const [editBio, setEditBio] = useState("");
   const [editInstagramId, setEditInstagramId] = useState("");
   const [editPhotoDataUrl, setEditPhotoDataUrl] = useState<string | null>(null);
-  
+
+  // Cropper State
+  const [rawImageToCrop, setRawImageToCrop] = useState<string | null>(null);
+  const [cropTarget, setCropTarget] = useState<"profile" | "edit">("profile");
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
   // Admin Dashboard
   const [adminTab, setAdminTab] = useState<"comments" | "password_requests" | "users">("users");
   const [passwordRequests, setPasswordRequests] = useState<any[]>([]);
@@ -205,47 +214,34 @@ export default function App() {
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-      alert("File is too large. Please upload an image smaller than 10MB.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const MAX_SIZE = 1200;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_SIZE) {
-            height *= MAX_SIZE / width;
-            width = MAX_SIZE;
-          }
-        } else {
-          if (height > MAX_SIZE) {
-            width *= MAX_SIZE / height;
-            height = MAX_SIZE;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          setPhotoDataUrl(canvas.toDataURL("image/webp", 0.82));
-        } else {
-          setPhotoDataUrl(event.target?.result as string);
-        }
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File is too large. Please upload an image smaller than 10MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setRawImageToCrop(event.target?.result as string);
+        setCropTarget("profile");
       };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropComplete = async () => {
+    if (!rawImageToCrop || !croppedAreaPixels) return;
+    try {
+      const croppedImage = await getCroppedImg(rawImageToCrop, croppedAreaPixels);
+      if (cropTarget === "profile") {
+        setPhotoDataUrl(croppedImage);
+      } else {
+        setEditPhotoDataUrl(croppedImage);
+      }
+      setRawImageToCrop(null);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to crop image");
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -765,48 +761,17 @@ export default function App() {
 
     const handleEditPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (!file) return;
-
-      if (file.size > 10 * 1024 * 1024) {
-        alert("File is too large. Please upload an image smaller than 10MB.");
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const MAX_SIZE = 1200;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > MAX_SIZE) {
-              height *= MAX_SIZE / width;
-              width = MAX_SIZE;
-            }
-          } else {
-            if (height > MAX_SIZE) {
-              width *= MAX_SIZE / height;
-              height = MAX_SIZE;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            setEditPhotoDataUrl(canvas.toDataURL("image/webp", 0.82));
-          } else {
-            setEditPhotoDataUrl(event.target?.result as string);
-          }
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setRawImageToCrop(event.target?.result as string);
+          setCropTarget("edit");
         };
-        img.src = event.target?.result as string;
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      }
     };
+
+
 
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 font-sans transition-colors">
@@ -1197,13 +1162,57 @@ export default function App() {
         )}
       </div>
 
-      {activeCommentBubble && (
-        <CommentModal
-          bubbleId={activeCommentBubble}
-          currentUser={currentUser}
-          onClose={() => setActiveCommentBubble(null)}
-        />
-      )}
-    </div>
-  );
+        {activeCommentBubble && (
+          <CommentModal
+            bubbleId={activeCommentBubble}
+            currentUser={currentUser}
+            onClose={() => setActiveCommentBubble(null)}
+          />
+        )}
+
+        {rawImageToCrop && (
+          <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4">
+            <div className="relative w-full max-w-md h-[60vh] bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
+              <Cropper
+                image={rawImageToCrop}
+                crop={crop}
+                zoom={zoom}
+                aspect={3 / 4}
+                onCropChange={setCrop}
+                onCropComplete={(croppedArea, croppedAreaPixels) => setCroppedAreaPixels(croppedAreaPixels)}
+                onZoomChange={setZoom}
+              />
+            </div>
+            
+            <div className="w-full max-w-md mt-8">
+              <input
+                type="range"
+                value={zoom}
+                min={1}
+                max={3}
+                step={0.1}
+                aria-labelledby="Zoom"
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-yellow-400"
+              />
+            </div>
+
+            <div className="w-full max-w-md mt-8 flex justify-between gap-4">
+              <button
+                onClick={() => setRawImageToCrop(null)}
+                className="flex-1 py-3.5 bg-gray-800 text-gray-300 rounded-xl font-semibold hover:bg-gray-700 transition active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCropComplete}
+                className="flex-1 py-3.5 bg-yellow-400 text-yellow-950 rounded-xl font-bold hover:bg-yellow-500 transition active:scale-95 shadow-lg shadow-yellow-500/20"
+              >
+                Apply Crop
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
 }
