@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Bubble, Comment } from "./types";
 import { db } from "./services/db";
@@ -105,7 +105,7 @@ export default function App() {
     }
   }, [view, currentUserData]);
 
-  const handleLike = async (bubbleId: string) => {
+  const handleLike = useCallback(async (bubbleId: string) => {
     const bubble = bubbles.find(b => b.id === bubbleId);
     if (!bubble) return;
     
@@ -118,18 +118,18 @@ export default function App() {
       ));
       await db.likeBubble(bubbleId, userId);
     }
-  };
+  }, [bubbles, userId]);
 
-  const handleSwipe = async (direction: "up" | "down" | "left" | "right") => {
+  const handleSwipe = useCallback(async (direction: "up" | "down" | "left" | "right") => {
     if (bubbles.length === 0) return;
     if (direction === "up") {
       setCurrentIndex((prev) => prev + 1);
     } else if (direction === "down") {
       setCurrentIndex((prev) => (prev - 1 < 0 ? bubbles.length - 1 : prev - 1));
     }
-  };
+  }, [bubbles.length]);
 
-  const handleSwipeLike = async (bubbleId: string, isLike: boolean) => {
+  const handleSwipeLike = useCallback(async (bubbleId: string, isLike: boolean) => {
     try {
       if (isLike) {
         await handleLike(bubbleId);
@@ -144,7 +144,7 @@ export default function App() {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [handleLike, userId]);
 
   const handleWheel = (e: React.WheelEvent) => {
     if (bubbles.length === 0 || activeCommentBubble || isScrollingRef.current || view !== "feed") return;
@@ -238,7 +238,7 @@ export default function App() {
         const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          setPhotoDataUrl(canvas.toDataURL("image/jpeg", 0.9));
+          setPhotoDataUrl(canvas.toDataURL("image/webp", 0.82));
         } else {
           setPhotoDataUrl(event.target?.result as string);
         }
@@ -798,7 +798,7 @@ export default function App() {
           const ctx = canvas.getContext("2d");
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            setEditPhotoDataUrl(canvas.toDataURL("image/jpeg", 0.9));
+            setEditPhotoDataUrl(canvas.toDataURL("image/webp", 0.82));
           } else {
             setEditPhotoDataUrl(event.target?.result as string);
           }

@@ -15,7 +15,7 @@ interface Props {
   userId: string;
 }
 
-export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick, onSwipeLike, isTop, indexOffset, userId }: Props) {
+function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick, onSwipeLike, isTop, indexOffset, userId }: Props) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
@@ -117,3 +117,5 @@ export default function SwipeCard({ bubble, onSwipe, onCommentClick, onLikeClick
     </motion.div>
   );
 }
+
+export default React.memo(SwipeCard);

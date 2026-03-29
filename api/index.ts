@@ -233,7 +233,7 @@ app.post("/api/login", async (req, res) => {
 
 app.get("/api/bubbles", async (req, res) => {
   const data = await readData();
-  res.json(data.bubbles);
+  res.json(data.bubbles.slice(0, 50));
 });
 
 app.post("/api/bubbles", async (req, res) => {
